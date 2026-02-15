@@ -18,28 +18,28 @@ int main() {
     bool show_grid = true;
 
     while (!WindowShouldClose()) {
-	BeginDrawing();
-	ClearBackground(BLACK);
-	
-	if (IsKeyPressed(KEY_R)) {
-	    freeGrid();
-	    initGrid(WINDOW_SIZE, GRID_SLICES);
-	    scatterNeurons(NEURON_PROB);
-	}
+    BeginDrawing();
+    ClearBackground(BLACK);
+    
+    if (IsKeyPressed(KEY_R)) {
+        freeGrid();
+        initGrid(WINDOW_SIZE, GRID_SLICES);
+        scatterNeurons(NEURON_PROB);
+    }
 
-	if (IsKeyPressed(KEY_H)) {
-	    show_grid = !show_grid;
-	}
+    if (IsKeyPressed(KEY_H)) {
+        show_grid = !show_grid;
+    }
 
-	if (IsKeyPressed(KEY_I)) {
-	    expungeGaussian();
-	}
-	
-	if (show_grid) {
-	    colorGrid();
-	}
-	
-	EndDrawing();
+    if (IsKeyPressed(KEY_I)) {
+        expungeGaussian();
+    }
+    
+    if (show_grid) {
+        colorGrid();
+    }
+    
+    EndDrawing();
     }
 
     freeGrid();
