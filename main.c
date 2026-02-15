@@ -16,6 +16,7 @@ int main() {
     scatterNeurons(NEURON_PROB);
 
     bool show_grid = true;
+    bool color_neurons = true;
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -31,12 +32,26 @@ int main() {
             show_grid = !show_grid;
         }
 
+        if (IsKeyPressed(KEY_N)) {
+            color_neurons = !color_neurons;
+        }
+
         if (IsKeyPressed(KEY_I)) {
+            expungeGaussian();
+            createNeurons();
+            zeroGridValues();
+        }
+
+        if (IsKeyPressed(KEY_E)) {
             expungeGaussian();
         }
 
+        if (IsKeyPressed(KEY_C)) {
+            createNeurons();
+        }
+
         if (show_grid) {
-            colorGrid();
+            colorGrid(color_neurons);
         }
 
         EndDrawing();

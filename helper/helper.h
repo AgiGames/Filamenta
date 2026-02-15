@@ -22,5 +22,6 @@ typedef struct {
 } Vector2DA;
 
 float gaussian2d_1std(float x, float y, float mean_x, float mean_y);
+bool float_equal(float a, float b);
 
 #endif
