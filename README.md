@@ -2,14 +2,13 @@
 A program that simulates how neurons connect with eachother in the brain!
 
 Before Iteration:
-
+![](https://github.com/AgiGames/NNSS/blob/main/images/0th_iteration.png)
 
 First Iteration:
-
+![](https://github.com/AgiGames/NNSS/blob/main/images/1st_iteration.png)
 
 Last Iteration:
-
-
+![](https://github.com/AgiGames/NNSS/blob/main/images/nth_iteration.png)
 
 ### Prerequisites
 - Development Environment
