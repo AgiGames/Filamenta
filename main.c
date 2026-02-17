@@ -6,17 +6,17 @@
 
 #define WINDOW_SIZE 750
 #define GRID_SLICES 50
-#define NEURON_PROB 0.025f
+#define ACCUMULATOR_PROB 0.025f
 
 int main() {
     srand(time(NULL));
 
-    InitWindow(WINDOW_SIZE, WINDOW_SIZE, "Neural Network Structure Simulator");
+    InitWindow(WINDOW_SIZE, WINDOW_SIZE, "Filamenta: Density-Driven Structure Simulator");
     initGrid(WINDOW_SIZE, GRID_SLICES);
-    scatterNeurons(NEURON_PROB);
+    scatterAccumulators(ACCUMULATOR_PROB);
 
     bool show_grid = true;
-    bool color_neurons = true;
+    bool color_accumulators = true;
     bool show_connections = true;
 
     while (!WindowShouldClose()) {
@@ -26,7 +26,7 @@ int main() {
         if (IsKeyPressed(KEY_R)) {
             freeGrid();
             initGrid(WINDOW_SIZE, GRID_SLICES);
-            scatterNeurons(NEURON_PROB);
+            scatterAccumulators(ACCUMULATOR_PROB);
         }
 
         if (IsKeyPressed(KEY_H)) {
@@ -34,7 +34,7 @@ int main() {
         }
 
         if (IsKeyPressed(KEY_N)) {
-            color_neurons = !color_neurons;
+            color_accumulators = !color_accumulators;
         }
 
         if (IsKeyPressed(KEY_C)) {
@@ -43,8 +43,7 @@ int main() {
 
         if (IsKeyPressed(KEY_I)) {
             expungeGaussian();
-            createNeurons();
-            // zeroGridValues();
+            createAccumulators();
         }
 
         if (IsKeyPressed(KEY_E)) {
@@ -52,15 +51,15 @@ int main() {
         }
 
         if (show_grid) {
-            colorGrid(color_neurons);
+            colorGrid(color_accumulators);
         }
 
         if (show_connections) {
-            connectNeurons();
+            connectAccumulators();
         }
 
-        const char* neurons_created_text = TextFormat("%zu", numNewNeurons());
-        DrawText(neurons_created_text, 10, 10, 50, GREEN);
+        const char* accumulators_created_text = TextFormat("%zu", numNewAccumulators());
+        DrawText(accumulators_created_text, 10, 10, 50, GREEN);
 
         EndDrawing();
     }

@@ -6,13 +6,12 @@
 
 void initGrid(size_t window_size, size_t slices);
 void freeGrid();
-void drawGrid(Color color);
-void colorGrid(bool color_neurons);
-void scatterNeurons(float neuron_prob);
+void colorGrid(bool color_accumulators);
+void scatterAccumulators(float accumulator_prob);
 void expungeGaussian();
-void createNeurons();
+void createAccumulators();
 void zeroGridValues();
-size_t numNewNeurons();
-void connectNeurons();
+size_t numNewAccumulators();
+void connectAccumulators();
 
 #endif

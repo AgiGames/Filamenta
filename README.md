@@ -1,5 +1,5 @@
-# Neural Network Structure Simulator (NNSS)
-A program that simulates how neurons connect with eachother in the brain!
+# Filamenta
+A program that simulates formation of filaments from densities.
 
 Before Iteration:
 
