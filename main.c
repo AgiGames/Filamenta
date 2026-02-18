@@ -11,9 +11,9 @@
 int main() {
     srand(time(NULL));
 
-    InitWindow(WINDOW_SIZE, WINDOW_SIZE, "Filamenta: Density-Driven Structure Simulator");
-    initGrid(WINDOW_SIZE, GRID_SLICES);
-    scatterAccumulators(ACCUMULATOR_PROB);
+    InitWindow(WINDOW_SIZE, WINDOW_SIZE, "Filamenta");
+    init_grid(WINDOW_SIZE, GRID_SLICES);
+    scatter_accumulators(ACCUMULATOR_PROB);
 
     bool show_grid = true;
     bool color_accumulators = true;
@@ -24,9 +24,9 @@ int main() {
         ClearBackground(BLACK);
 
         if (IsKeyPressed(KEY_R)) {
-            freeGrid();
-            initGrid(WINDOW_SIZE, GRID_SLICES);
-            scatterAccumulators(ACCUMULATOR_PROB);
+            free_grid();
+            init_grid(WINDOW_SIZE, GRID_SLICES);
+            scatter_accumulators(ACCUMULATOR_PROB);
         }
 
         if (IsKeyPressed(KEY_H)) {
@@ -42,29 +42,29 @@ int main() {
         }
 
         if (IsKeyPressed(KEY_I)) {
-            expungeGaussian();
-            createAccumulators();
+            expunge_gaussian();
+            create_accumulators();
         }
 
         if (IsKeyPressed(KEY_E)) {
-            expungeGaussian();
+            expunge_gaussian();
         }
 
         if (show_grid) {
-            colorGrid(color_accumulators);
+            color_grid(color_accumulators);
         }
 
         if (show_connections) {
-            connectAccumulators();
+            connect_accumulators();
         }
 
-        const char* accumulators_created_text = TextFormat("%zu", numNewAccumulators());
-        DrawText(accumulators_created_text, 10, 10, 50, GREEN);
+        const char* num_accumulators_text = TextFormat("%zu", get_num_accumulators());
+        DrawText(num_accumulators_text, 10, 10, 50, GREEN);
 
         EndDrawing();
     }
 
-    freeGrid();
+    free_grid();
     CloseWindow();
     return 0;
 }

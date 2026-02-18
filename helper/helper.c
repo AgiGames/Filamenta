@@ -18,7 +18,7 @@ bool float_equal(float a, float b) {
     return diff <= largest * 1e-6f;
 }
 
-Color heatmapCmap(float intensity) {
+Color heatmap_cmap(float intensity) {
     if (intensity == 1.0f) {
         return WHITE;
     }

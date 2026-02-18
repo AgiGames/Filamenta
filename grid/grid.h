@@ -4,14 +4,13 @@
 #include "raylib.h"
 #include <stddef.h>
 
-void initGrid(size_t window_size, size_t slices);
-void freeGrid();
-void colorGrid(bool color_accumulators);
-void scatterAccumulators(float accumulator_prob);
-void expungeGaussian();
-void createAccumulators();
-void zeroGridValues();
-size_t numNewAccumulators();
-void connectAccumulators();
+void init_grid(size_t window_size, size_t slices);
+void free_grid();
+void color_grid(bool color_accumulators);
+void scatter_accumulators(float accumulator_prob);
+void expunge_gaussian();
+void create_accumulators();
+size_t get_num_accumulators();
+void connect_accumulators();
 
 #endif

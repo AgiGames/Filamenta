@@ -11,6 +11,7 @@ Last Iteration:
 
 ### Prerequisites
 - Development Environment
+
     - Ubuntu Linux
     - IDK installation protocols for other linux distros, but it is possible.
     - If on Windows, use WSL:
@@ -63,11 +64,17 @@ Last Iteration:
     ```
 
 ### Build & Run Application
-- In the root directory, run the following command.
-
+- Clone the repository.
 
     ```
-    gcc -g main.c grid/grid.c helper/helper.c -o app.exe -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 && ./app.exe    
+    git clone git@github.com:AgiGames/Filamenta.git
+    cd Filamenta
+    ```
+
+- In the root directory, run the following command.
+
+    ```
+    gcc main.c grid/grid.c helper/helper.c -o app.exe -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 && ./app.exe    
     ```
     
 - It should work.

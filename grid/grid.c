@@ -11,15 +11,15 @@
 size_t window_size_g = 750;
 size_t slices_g = 50;
 float spacing_g = 15.0f;
-size_t accumulators_created = 0;
+size_t num_accumulators = 0;
 
 float** grid_values = NULL;
 bool** is_accumulator = NULL;
 Vector2DA accumulators = {0};
 Vector2 ref_point = {0};
 
-void initGrid(size_t window_size, size_t slices) {
-    accumulators_created = 0;
+void init_grid(size_t window_size, size_t slices) {
+    num_accumulators = 0;
     window_size_g = window_size;
     slices_g = slices;
     spacing_g = (float) window_size / slices;
@@ -33,7 +33,7 @@ void initGrid(size_t window_size, size_t slices) {
     }
 }
  
-void scatterAccumulators(float accumulator_prob) {
+void scatter_accumulators(float accumulator_prob) {
     for (size_t i = 0; i < slices_g; ++i) {
         for (size_t j = 0; j < slices_g; ++j) {
             float random_number = (float) rand() / RAND_MAX;
@@ -41,12 +41,12 @@ void scatterAccumulators(float accumulator_prob) {
 
             is_accumulator[i][j] = true;
             DA_APPEND(accumulators, ((Vector2) {(j * spacing_g) + (spacing_g / 2.0f), (i * spacing_g) + (spacing_g / 2.0f)}));
-            accumulators_created += 1;
+            num_accumulators += 1;
         }
     }
 }
 
-void drawGrid(Color color) {
+void draw_grid(Color color) {
     float x = 0;
     for (size_t j = 0; j <= slices_g; ++j, x += spacing_g) {
         Vector2 startPos = {.x = x, .y = 0};
@@ -64,7 +64,7 @@ void drawGrid(Color color) {
     }
 }
 
-void freeGrid() {
+void free_grid() {
     if (grid_values != NULL) {
         FREE_2D_ARR(grid_values, slices_g);
     }
@@ -74,7 +74,7 @@ void freeGrid() {
     }
 }
 
-void expungeGaussian() {
+void expunge_gaussian() {
     Vector2DA means = {0};
     for (size_t i = 0; i < slices_g; ++i) {
         for (size_t j = 0; j < slices_g; ++j) {
@@ -107,7 +107,7 @@ void expungeGaussian() {
      }
 }
 
-bool isMaxima(size_t i, size_t j) {
+bool is_maxima(size_t i, size_t j) {
     bool up_good = 0, down_good = 0, left_good = 0, right_good = 0;
     float cur_value = grid_values[i][j];
 
@@ -134,7 +134,7 @@ bool isMaxima(size_t i, size_t j) {
     return up_good && down_good && left_good && right_good;
 }
 
-void createAccumulators() {
+void create_accumulators() {
     bool** new_is_accumulator = (bool**) calloc(slices_g, sizeof(bool*));
     for (size_t i = 0; i < slices_g; ++i) {
         new_is_accumulator[i] = (bool*) calloc(slices_g, sizeof(bool));
@@ -142,9 +142,9 @@ void createAccumulators() {
 
     for (size_t i = 0; i < slices_g; ++i) {
         for (size_t j = 0; j < slices_g; ++j) {
-            new_is_accumulator[i][j] = isMaxima(i, j) | is_accumulator[i][j];
-            if (isMaxima(i, j) && !is_accumulator[i][j]) {
-                accumulators_created++;
+            new_is_accumulator[i][j] = is_maxima(i, j) | is_accumulator[i][j];
+            if (is_maxima(i, j) && !is_accumulator[i][j]) {
+                num_accumulators++;
                 DA_APPEND(accumulators, ((Vector2) {(j * spacing_g) + (spacing_g / 2.0f), (i * spacing_g) + (spacing_g / 2.0f)}));
             }
 
@@ -155,7 +155,7 @@ void createAccumulators() {
     is_accumulator = new_is_accumulator;
 }
 
-void colorGrid(bool color_accumulators) {
+void color_grid(bool color_accumulators) {
     for (size_t i = 0; i < slices_g; ++i) {
         for (size_t j = 0; j < slices_g; ++j) {
             // i corresponds to y axis coordinate
@@ -164,18 +164,15 @@ void colorGrid(bool color_accumulators) {
             float x = j * spacing_g;
             float y = i * spacing_g;
             
+            DrawRectangle(x, y, spacing_g, spacing_g, heatmap_cmap(grid_values[i][j]));
             if (is_accumulator[i][j] && color_accumulators) {
-                DrawRectangle(x, y, spacing_g, spacing_g, heatmapCmap(grid_values[i][j]));
                 DrawCircle(x + (spacing_g / 2.0f), y + (spacing_g / 2.0f), (spacing_g / 2.0), WHITE);
-            }
-            else {
-                DrawRectangle(x, y, spacing_g, spacing_g, heatmapCmap(grid_values[i][j]));
             }
         }
     }
 }
 
-int pointsCompar(const void *a, const void *b) {
+int points_compar(const void *a, const void *b) {
     const Vector2 *pa = a;
     const Vector2 *pb = b;
 
@@ -187,12 +184,12 @@ int pointsCompar(const void *a, const void *b) {
     return 0;
 }
 
-void connectAccumulators() {
+void connect_accumulators() {
     Vector2* accumulators_coord_copy = NULL;
     COPY_ARR(accumulators_coord_copy, accumulators.items, accumulators.count);
     for (size_t i = 0; i < accumulators.count; ++i) {
         ref_point = accumulators.items[i];
-        qsort(accumulators_coord_copy, accumulators.count, sizeof(Vector2), pointsCompar);
+        qsort(accumulators_coord_copy, accumulators.count, sizeof(Vector2), points_compar);
         size_t row = (size_t) ((ref_point.y - (spacing_g / 2.0f)) / spacing_g);
         size_t col = (size_t) ((ref_point.x - (spacing_g / 2.0)) / spacing_g);
         float point_intensity = grid_values[row][col];
@@ -218,6 +215,6 @@ void connectAccumulators() {
     free(accumulators_coord_copy);
 }
 
-size_t numNewAccumulators() {
-    return accumulators_created;
+size_t get_num_accumulators() {
+    return num_accumulators;
 }
