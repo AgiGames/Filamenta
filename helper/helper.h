@@ -43,14 +43,19 @@
         } \
     } while(0)
 
+#define MEMB_SELECT(members, memb_index, memb_size) \
+    ((void *)((char *)(members) + ((memb_size) * (memb_index))))
+
 typedef struct {
     Vector2* items;
     size_t count;
     size_t capacity;
 } Vector2DA;
 
-float gaussian2d_1std(float x, float y, float mean_x, float mean_y);
+float gaussian2d_1std(float x, float y, float mean_x, float mean_y, size_t stddev);
 bool float_equal(float a, float b);
 Color heatmap_cmap(float intensity);
+size_t qselect(void* base, size_t k, size_t num_elements, size_t element_size, int (*cmp)(const void*, const void*));
+int points_compar(const void *a, const void *b);
 
 #endif

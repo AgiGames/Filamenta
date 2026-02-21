@@ -4,14 +4,15 @@
 #include <math.h>
 
 #include "../helper/helper.h"
-#include "raymath.h"
 #include "raylib.h"
 #include "grid.h"
+#include "../globals/globals.h"
 
 size_t window_size_g = 750;
 size_t slices_g = 50;
 float spacing_g = 15.0f;
 size_t num_accumulators = 0;
+size_t stddev = 10;
 
 float *grid_values = NULL;
 bool *is_accumulator = NULL;
@@ -69,7 +70,7 @@ void expunge_gaussian() {
         for (size_t j = 0; j < slices_g; ++j) {
             for (size_t k = 0; k < means.count; ++k) {
                 Vector2 mean_pair = means.items[k];
-                GRID_ACCESS(grid_values, i, j) += gaussian2d_1std((float)j, (float)i, mean_pair.x, mean_pair.y);
+                GRID_ACCESS(grid_values, i, j) += gaussian2d_1std((float)j, (float)i, mean_pair.x, mean_pair.y, stddev);
                 max_intensity = fmax(max_intensity, GRID_ACCESS(grid_values, i, j));
             }
         }
@@ -148,25 +149,12 @@ void color_grid(bool color_accumulators) {
     }
 }
 
-int points_compar(const void *a, const void *b) {
-    const Vector2 *pa = a;
-    const Vector2 *pb = b;
-
-    float da = Vector2Distance(ref_point, *pa);
-    float db = Vector2Distance(ref_point, *pb);
-
-    if (da < db) return -1;
-    if (da > db) return 1;
-    return 0;
-}
-
 void connect_accumulators() {
     Vector2 *accumulators_coord_copy = NULL;
     COPY_ARR(accumulators_coord_copy, accumulators.items, accumulators.count);
 
     for (size_t i = 0; i < accumulators.count; ++i) {
         ref_point = accumulators.items[i];
-        qsort(accumulators_coord_copy, accumulators.count, sizeof(Vector2), points_compar);
 
         size_t row = (size_t)((ref_point.y - (spacing_g / 2.0f)) / spacing_g);
         size_t col = (size_t)((ref_point.x - (spacing_g / 2.0f)) / spacing_g);
@@ -175,6 +163,8 @@ void connect_accumulators() {
         size_t num_connections = floor(point_intensity * accumulators.count);
         if (num_connections < 2) num_connections = 2;
 
+        qselect(accumulators_coord_copy, num_connections, accumulators.count, sizeof(Vector2), points_compar);
+
         for (size_t j = 0; j < num_connections; ++j) {
             if (j + 1 < accumulators.count) {
                 Vector2 j_closest_point = accumulators_coord_copy[j + 1];
@@ -182,7 +172,7 @@ void connect_accumulators() {
                 size_t j_row = (size_t)((j_closest_point.y - (spacing_g / 2.0f)) / spacing_g);
                 size_t j_col = (size_t)((j_closest_point.x - (spacing_g / 2.0f)) / spacing_g);
 
-                if (gaussian2d_1std(j_col, j_row, col, row) < 0.1f) continue;
+                if (gaussian2d_1std(j_col, j_row, col, row, stddev) < 0.1f) continue;
 
                 DrawLineV(ref_point, accumulators_coord_copy[j + 1], WHITE);
             }
