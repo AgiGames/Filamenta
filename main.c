@@ -1,3 +1,5 @@
+// CUDA ver init comment line :)
+
 #include "raylib.h"
 #include "grid/grid.h"
 #include <time.h>
