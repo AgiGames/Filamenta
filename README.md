@@ -20,7 +20,7 @@ A program that simulates formation of filaments from densities.
         wsl --install ubuntu
         ```
         
-    - No MacOS support for now.
+- MacOS support added.
 
 - Libraries
 
@@ -56,19 +56,37 @@ A program that simulates formation of filaments from densities.
     sudo make install
     sudo ld onst char *title)config
     ```
+    - **MacOS**
+  
+    ```
+    brew install raylib
+    ```
 
 ### Build & Run Application
 - Clone the repository.
 
     ```
-    git clone git@github.com:AgiGames/Filamenta.git
+    git clone https://github.com/AgiGames/Filamenta.git
     cd Filamenta
     ```
 
-- In the root directory, run the following command.
+- Use the provided Makefile (works on both Linux and MacOS).
 
     ```
-    gcc main.c grid/grid.c helper/helper.c -o app.exe -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 && ./app.exe    
+    make
+    ./filamenta
+    ```
+
+- Alternatively, run the following command directly.
+
+    - **Linux**
+    ```
+    gcc main.c grid/grid.c helper/helper.c -o filamenta -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+    ```
+
+    - **MacOS**
+    ```
+    gcc main.c grid/grid.c helper/helper.c -o filamenta -I$(brew --prefix)/include -L$(brew --prefix)/lib -lraylib -framework CoreVideo -framework IOKit -framework Cocoa -framework OpenGL
     ```
     
 - It should work.
