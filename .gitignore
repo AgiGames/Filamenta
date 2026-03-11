@@ -1,4 +1,5 @@
 app-release.exe
+filamenta-debug
 filamenta
 *.o
 .DS_Store
