@@ -1,1 +1,4 @@
 app-release.exe
+filamenta
+*.o
+.DS_Store
