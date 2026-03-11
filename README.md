@@ -46,7 +46,9 @@ A program that simulates formation of filaments from densities.
     ```
 
     Clone & build raylib (graphics library).
-  
+
+    - **Linux**
+
     ```
     git clone https://github.com/raysan5/raylib.git
     cd raylib
@@ -56,6 +58,7 @@ A program that simulates formation of filaments from densities.
     sudo make install
     sudo ld onst char *title)config
     ```
+    
     - **MacOS**
   
     ```
