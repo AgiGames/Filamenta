@@ -1,7 +1,7 @@
 # Makefile for Filamenta
 
 CC = gcc
-CFLAGS = -Wall -std=c99
+CFLAGS = -D_POSIX_C_SOURCE=199309L -Wall -std=c99
 SRC = main.c grid/grid.c helper/helper.c
 OBJ = $(SRC:.c=.o)
 TARGET = filamenta

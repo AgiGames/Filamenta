@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <float.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "../helper/helper.h"
 #include "raylib.h"
 #include "grid.h"
 #include "../globals/globals.h"
+#include "rlgl.h"
 
 size_t window_size_g = 750;
 size_t slices_g = 50;
@@ -20,6 +22,10 @@ Vector2DA accumulators = {0};
 PointPairDA connections = {0};
 Vector2 ref_point = {0};
 bool changed = false;
+
+Image heatmap_img;
+Texture2D heatmap_tex;
+RenderTexture2D target;
 
 void init_grid(size_t window_size, size_t slices) {
     num_accumulators = 0;
@@ -160,28 +166,48 @@ void create_accumulators() {
 }
 
 void color_grid(bool color_accumulators) {
+    Color *pixels = (Color *)heatmap_img.data;
+
     for (size_t i = 0; i < slices_g; ++i) {
         for (size_t j = 0; j < slices_g; ++j) {
-            float x = j * spacing_g;
-            float y = i * spacing_g;
-
-            DrawRectangle(x, y, spacing_g, spacing_g, heatmap_cmap(GRID_ACCESS(grid_values, i, j)));
+            float v = GRID_ACCESS(grid_values, i, j);
+            GRID_ACCESS(pixels, i, j) = heatmap_cmap(v);
             if (GRID_ACCESS(is_accumulator, i, j) && color_accumulators) {
-                DrawCircle(x + (spacing_g / 2.0f), y + (spacing_g / 2.0f), (spacing_g * 0.3f), WHITE);
+                GRID_ACCESS(pixels, i, j) = WHITE;
             }
         }
     }
+
+    UpdateTexture(heatmap_tex, pixels);
+
+    // draw the texture scaled to grid size
+    DrawTexturePro(
+            heatmap_tex,
+            (Rectangle) {0, 0, slices_g, slices_g},
+            (Rectangle) {0, 0, slices_g * spacing_g, slices_g * spacing_g},
+            (Vector2) {0 ,0},
+            0,
+            WHITE
+    );
 }
 
 void draw_accumulator_connections() {
+    rlBegin(RL_LINES);
+    rlColor4ub(255, 255, 255, 255); // ~20% opacity
+
     for (size_t i = 0; i < connections.count; ++i) {
         PointPair pp = connections.items[i];
-        // DrawText("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB", 10, 10, 20, WHITE);
-        DrawLineV(pp.p1, pp.p2, WHITE);
+
+        rlVertex2f(pp.p1.x, pp.p1.y);
+        rlVertex2f(pp.p2.x, pp.p2.y);
     }
+
+    rlEnd();
 }
 
 void connect_accumulators() {
+    double start = now();
+
     Vector2 *accumulators_coord_copy = NULL;
     COPY_ARR(accumulators_coord_copy, accumulators.items, accumulators.count);
     connections.count = 0;
@@ -195,8 +221,7 @@ void connect_accumulators() {
 
         size_t num_connections = floor(point_intensity * accumulators.count);
         if (num_connections < 2) num_connections = 2;
-
-        qselect(accumulators_coord_copy, num_connections, accumulators.count, sizeof(Vector2), points_compar);
+        qsort(accumulators_coord_copy, accumulators.count, sizeof(Vector2), points_compar);
 
         for (size_t j = 0; j < num_connections; ++j) {
             if (j + 1 < accumulators.count) {
@@ -213,6 +238,9 @@ void connect_accumulators() {
     }
 
     free(accumulators_coord_copy);
+
+    double end = now();
+    printf("connect_accumulators: %.6f seconds\n", end - start);
 }
 
 void do_n_iterations() {

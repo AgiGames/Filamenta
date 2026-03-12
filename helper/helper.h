@@ -75,5 +75,6 @@ bool float_equal(float a, float b);
 Color heatmap_cmap(float intensity);
 size_t qselect(void* base, size_t k, size_t num_elements, size_t element_size, int (*cmp)(const void*, const void*));
 int points_compar(const void *a, const void *b);
+double now();
 
 #endif

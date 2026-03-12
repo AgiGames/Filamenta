@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stddef.h>
 #include <limits.h>
+#include <time.h>
+#include <stdio.h>
 
 #include "raylib.h"
 #include "raymath.h"
@@ -44,8 +46,13 @@ int points_compar(const void *a, const void *b) {
     const Vector2 *pa = a;
     const Vector2 *pb = b;
 
-    float da = Vector2Distance(ref_point, *pa);
-    float db = Vector2Distance(ref_point, *pb);
+    float dx_a = pa->x - ref_point.x;
+    float dy_a = pa->y - ref_point.y;
+    float da = dx_a*dx_a + dy_a*dy_a;
+
+    float dx_b = pb->x - ref_point.x;
+    float dy_b = pb->y - ref_point.y;
+    float db = dx_b*dx_b + dy_b*dy_b;
 
     if (da < db) return -1;
     if (da > db) return 1;
@@ -99,4 +106,11 @@ size_t qselect_recur(void* base, size_t l, size_t r, size_t k,
 
 size_t qselect(void* base, size_t k, size_t num_elements, size_t element_size, int (*cmp)(const void*, const void*)) {
     return qselect_recur(base, 0, num_elements - 1, k, num_elements, element_size, cmp);
+}
+
+
+double now() {
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec + t.tv_nsec * 1e-9;
 }
