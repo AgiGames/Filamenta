@@ -1,10 +1,15 @@
 # Makefile for Filamenta
 
-CC = gcc
-CFLAGS = -D_POSIX_C_SOURCE=199309L -Wall -std=c99
-SRC = main.c grid/grid.c helper/helper.c
-OBJ = $(SRC:.c=.o)
+# Makefile for Filamenta
+
+CC = nvcc
 TARGET = filamenta
+
+SRC = main.cu grid/grid.cu helper/helper.cu
+OBJ = $(SRC:.cu=.o)
+
+CFLAGS = -std=c++17 -arch=sm_75 -g
+HOSTFLAGS = -Wall -D_POSIX_C_SOURCE=199309L
 
 # Detect OS
 UNAME_S := $(shell uname -s)
@@ -14,18 +19,24 @@ ifeq ($(UNAME_S), Linux)
 endif
 
 ifeq ($(UNAME_S), Darwin)
-	# macOS paths for Homebrew
 	BREW_PATH = $(shell brew --prefix)
 	CFLAGS += -I$(BREW_PATH)/include
 	LDFLAGS = -L$(BREW_PATH)/lib
 	LIBS = -lraylib -framework CoreVideo -framework IOKit -framework Cocoa -framework OpenGL
 endif
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS) $(LIBS)
+# =========================
+# Build rules
+# =========================
+
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET) $(LDFLAGS) $(LIBS)
+
+%.o: %.cu
+	$(CC) $(CFLAGS) -Xcompiler "$(HOSTFLAGS)" -c $< -o $@
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(OBJ)
 
 run: $(TARGET)
 	./$(TARGET)

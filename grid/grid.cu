@@ -180,11 +180,10 @@ void color_grid(bool color_accumulators) {
 
     UpdateTexture(heatmap_tex, pixels);
 
-    // draw the texture scaled to grid size
     DrawTexturePro(
             heatmap_tex,
-            (Rectangle) {0, 0, slices_g, slices_g},
-            (Rectangle) {0, 0, slices_g * spacing_g, slices_g * spacing_g},
+            (Rectangle) {0, 0, (float) slices_g, (float) slices_g},
+            (Rectangle) {0, 0, (float) slices_g * spacing_g, (float) slices_g * spacing_g},
             (Vector2) {0 ,0},
             0,
             WHITE
@@ -193,7 +192,7 @@ void color_grid(bool color_accumulators) {
 
 void draw_accumulator_connections() {
     rlBegin(RL_LINES);
-    rlColor4ub(255, 255, 255, 255); // ~20% opacity
+    rlColor4ub(255, 255, 255, 255);
 
     for (size_t i = 0; i < connections.count; ++i) {
         PointPair pp = connections.items[i];
@@ -205,39 +204,155 @@ void draw_accumulator_connections() {
     rlEnd();
 }
 
-void connect_accumulators() {
-    double start = now();
+__global__ void ca_kernel(
+    Vector2* accum_connections,
+    size_t* accum_connections_idxs,
+    Vector2DA accumulators,
+    float* grid_values,
+    float spacing_g,
+    size_t slices_g
+) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= accumulators.count) return;
 
-    Vector2 *accumulators_coord_copy = NULL;
-    COPY_ARR(accumulators_coord_copy, accumulators.items, accumulators.count);
-    connections.count = 0;
+    Vector2 ref_point = accumulators.items[i];
+    
+    size_t row = (size_t)((ref_point.y - (spacing_g / 2.0f)) / spacing_g);
+    size_t col = (size_t)((ref_point.x - (spacing_g / 2.0f)) / spacing_g);
 
-    for (size_t i = 0; i < accumulators.count; ++i) {
-        ref_point = accumulators.items[i];
+    float point_intensity = GRID_ACCESS(grid_values, row, col);
 
-        size_t row = (size_t)((ref_point.y - (spacing_g / 2.0f)) / spacing_g);
-        size_t col = (size_t)((ref_point.x - (spacing_g / 2.0f)) / spacing_g);
-        float point_intensity = GRID_ACCESS(grid_values, row, col);
+    size_t num_connections = (size_t)floorf(point_intensity * accumulators.count);
+    if (num_connections < 2) num_connections = 2;
+    if (num_connections > 300) num_connections = 300;
 
-        size_t num_connections = floor(point_intensity * accumulators.count);
-        if (num_connections < 2) num_connections = 2;
-        qsort(accumulators_coord_copy, accumulators.count, sizeof(Vector2), points_compar);
+    NeigborDetails heap[300];
+    size_t heap_len = 0;
 
-        for (size_t j = 0; j < num_connections; ++j) {
-            if (j + 1 < accumulators.count) {
-                Vector2 j_closest_point = accumulators_coord_copy[j + 1];
+    for (size_t j = 0; j < accumulators.count; ++j) {
+        if (j == i) continue;
 
-                size_t j_row = (size_t)((j_closest_point.y - (spacing_g / 2.0f)) / spacing_g);
-                size_t j_col = (size_t)((j_closest_point.x - (spacing_g / 2.0f)) / spacing_g);
+        Vector2 cur_point = accumulators.items[j];
 
-                if (gaussian2d(j_col, j_row, col, row, stddev) < 0.1f) continue;
-                
-                DA_APPEND(connections, ((PointPair) {ref_point, accumulators_coord_copy[j + 1]}));
+        float dx = ref_point.x - cur_point.x;
+        float dy = ref_point.y - cur_point.y;
+        float cur_dist = dx*dx + dy*dy;
+
+        if (heap_len < num_connections) {
+            heap[heap_len++] = {cur_dist, j};
+        }
+        else {
+            size_t worst = 0;
+            for (size_t k = 1; k < heap_len; ++k) {
+                if (heap[k].dist > heap[worst].dist) {
+                    worst = k;
+                }
+            }
+
+            if (cur_dist < heap[worst].dist) {
+                heap[worst] = {cur_dist, j};
             }
         }
     }
 
-    free(accumulators_coord_copy);
+    size_t base = i * 300;
+
+    for (size_t j = 0; j < heap_len; ++j) {
+        size_t idx = accum_connections_idxs[i];
+
+        if (idx < 300) {
+            accum_connections[base + idx] =
+                accumulators.items[heap[j].idx];
+
+            accum_connections_idxs[i] = idx + 1;
+        }
+    }
+}
+
+void connect_accumulators() {
+    double start = now();
+
+    size_t total = accumulators.count;
+
+    Vector2* accum_connections =
+        (Vector2*)malloc(total * 300 * sizeof(Vector2));
+
+    size_t* accum_connections_idxs =
+        (size_t*)calloc(total, sizeof(size_t));
+
+    Vector2* d_accum_connections = NULL;
+    size_t* d_accum_connections_idxs = NULL;
+    float* d_grid_values = NULL;
+    Vector2* d_accumulator_items = NULL;
+
+    cudaMalloc(&d_accum_connections, total * 300 * sizeof(Vector2));
+    cudaMalloc(&d_accum_connections_idxs, total * sizeof(size_t));
+    cudaMalloc(&d_grid_values, GRID_SLICES * GRID_SLICES * sizeof(float));
+
+    cudaMalloc(&d_accumulator_items, accumulators.count * sizeof(Vector2));
+
+    cudaMemset(d_accum_connections, 0, total * 300 * sizeof(Vector2));
+    cudaMemset(d_accum_connections_idxs, 0, total * sizeof(size_t));
+
+    cudaMemcpy(d_grid_values,
+               grid_values,
+               GRID_SLICES * GRID_SLICES * sizeof(float),
+               cudaMemcpyHostToDevice);
+
+    cudaMemcpy(d_accumulator_items,
+               accumulators.items,
+               accumulators.count * sizeof(Vector2),
+               cudaMemcpyHostToDevice);
+
+    Vector2DA d_accumulators = accumulators;
+    d_accumulators.items = d_accumulator_items;
+
+    int threads = 256;
+    int blocks = (accumulators.count + threads - 1) / threads;
+
+    ca_kernel<<<blocks, threads>>>(
+        d_accum_connections,
+        d_accum_connections_idxs,
+        d_accumulators,
+        d_grid_values,
+        spacing_g,
+        slices_g
+    );
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(accum_connections,
+               d_accum_connections,
+               total * 300 * sizeof(Vector2),
+               cudaMemcpyDeviceToHost);
+
+    cudaMemcpy(accum_connections_idxs,
+               d_accum_connections_idxs,
+               total * sizeof(size_t),
+               cudaMemcpyDeviceToHost);
+
+    for (size_t i = 0; i < accumulators.count; ++i) {
+        Vector2 ref_point = accumulators.items[i];
+        size_t row = (size_t)((ref_point.y - (spacing_g / 2.0f)) / spacing_g);
+        size_t col = (size_t)((ref_point.x - (spacing_g / 2.0f)) / spacing_g);
+
+        for (size_t j = 0; j < accum_connections_idxs[i]; ++j) {
+            Vector2 j_closest_point = accum_connections[i * 300 + j];
+            size_t j_row = (size_t)((j_closest_point.y - (spacing_g / 2.0f)) / spacing_g);
+            size_t j_col = (size_t)((j_closest_point.x - (spacing_g / 2.0f)) / spacing_g);
+
+            if (gaussian2d(j_col, j_row, col, row, stddev) < 0.1f) continue;
+
+            DA_APPEND(connections, ((PointPair){ref_point, j_closest_point}));
+        }
+    }
+
+    cudaFree(d_accum_connections);
+    cudaFree(d_accum_connections_idxs);
+    cudaFree(d_grid_values);
+    cudaFree(d_accumulator_items);
+    free(accum_connections);
+    free(accum_connections_idxs);
 
     double end = now();
     printf("connect_accumulators: %.6f seconds\n", end - start);

@@ -7,7 +7,6 @@
 #include <stdio.h>
 
 #include "raylib.h"
-#include "raymath.h"
 #include "../globals/globals.h"
 
 float gaussian1d(float x, float mean, size_t stddev) {
@@ -37,14 +36,21 @@ Color heatmap_cmap(float intensity) {
     }
 
     if (intensity < 0.5f) {
-        return (Color) {255 * (intensity * 2), 0, 0, 255};
+        return (Color) {(unsigned char) (255 * (intensity * 2)), 0, 0, 255};
     }
-    return (Color) {255, 255 * ((intensity - 0.5) * 2), 0, 255};
+    return (Color) {255, (unsigned char) (255 * ((intensity - 0.5) * 2)), 0, 255};
+}
+
+__device__ float euclidean_distance(const Vector2 a, const Vector2 b) {
+    float dx = a.x - b.x;
+    float dy = a.y - b.y;
+
+    return dx*dx + dy*dy;
 }
 
 int points_compar(const void *a, const void *b) {
-    const Vector2 *pa = a;
-    const Vector2 *pb = b;
+    const Vector2 *pa = (Vector2*) a;
+    const Vector2 *pb = (Vector2*) b;
 
     float dx_a = pa->x - ref_point.x;
     float dy_a = pa->y - ref_point.y;
@@ -60,8 +66,8 @@ int points_compar(const void *a, const void *b) {
 }
 
 void void_swap(void* a, void* b, size_t size) {
-    char* cpa = a;
-    char* cpb = b;
+    char* cpa = (char*) a;
+    char* cpb = (char*) b;
     for (size_t i = 0; i < size; ++i) {
         char temp = cpa[i];
         cpa[i] = cpb[i];

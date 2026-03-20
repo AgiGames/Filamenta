@@ -7,10 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define WINDOW_SIZE 750
-#define GRID_SLICES 375
-#define ACCUMULATOR_PROB 0.025f
-
 int main() {
     srand(time(NULL));
 
@@ -72,7 +68,7 @@ int main() {
         EndTextureMode();
         DrawTextureRec(
             target.texture,
-            (Rectangle){0, 0, target.texture.width, -target.texture.height},
+            (Rectangle){0, 0, (float) target.texture.width, (float) -target.texture.height},
             (Vector2){0, 0},
             WHITE
         );

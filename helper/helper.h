@@ -4,20 +4,21 @@
 #include "raylib.h"
 #include <stddef.h>
 #include <stdlib.h>
+#include <cuda_runtime.h>
 
 #define DA_APPEND(xs, x) \
     do { \
         if (xs.count >= xs.capacity) { \
             if (xs.capacity == 0) xs.capacity = 256; \
             else xs.capacity *= 2; \
-            xs.items = realloc(xs.items, xs.capacity * sizeof(*xs.items)); \
+            xs.items = (typeof(xs.items)) realloc(xs.items, xs.capacity * sizeof(*xs.items)); \
         } \
         xs.items[xs.count++] = x; \
     } while(0)
 
 #define COPY_ARR(dest, source, source_len) \
     do { \
-        dest = calloc((source_len), sizeof(*source)); \
+        dest = (typeof(source)) calloc((source_len), sizeof(*source)); \
         for (size_t copy_arr_i = 0; copy_arr_i < (source_len); ++copy_arr_i) { \
             dest[copy_arr_i] = source[copy_arr_i]; \
         } \
@@ -69,6 +70,11 @@ typedef struct {
     size_t capacity;
 } PointPairDA;
 
+typedef struct {
+    float dist;
+    size_t idx;
+} NeigborDetails;
+
 float gaussian2d(float x, float y, float mean_x, float mean_y, size_t stddev);
 float gaussian1d(float x, float mean, size_t stddev);
 bool float_equal(float a, float b);
@@ -76,5 +82,6 @@ Color heatmap_cmap(float intensity);
 size_t qselect(void* base, size_t k, size_t num_elements, size_t element_size, int (*cmp)(const void*, const void*));
 int points_compar(const void *a, const void *b);
 double now();
+__device__ float euclidean_distance(const Vector2 a, const Vector2 b);
 
 #endif
