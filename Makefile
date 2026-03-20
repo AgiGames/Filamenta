@@ -8,7 +8,7 @@ TARGET = filamenta
 SRC = main.cu grid/grid.cu helper/helper.cu
 OBJ = $(SRC:.cu=.o)
 
-CFLAGS = -std=c++17 -arch=sm_75 -g
+CFLAGS = -std=c++17 -arch=sm_75
 HOSTFLAGS = -Wall -D_POSIX_C_SOURCE=199309L
 
 # Detect OS
